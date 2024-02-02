@@ -1,0 +1,54 @@
+name: Nodejs Image
+on:
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ayaka-notes/image-cn/node
+
+jobs:
+  clean-node-texlive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete 'untaged' containers
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: node/*,node
+          cut-off: 1 min ago UTC
+          account-type: org
+          org-name: ayaka-notes
+          untagged-only: true
+          token: ${{ secrets.ORGTOKEN }}
+
+  build-image:
+    runs-on: ubuntu-latest
+    needs: clean-node-texlive
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        node-version: [18.18.2, 16.13.0]
+    name: Nodejs ${{ matrix.tex-version }}
+    steps:
+      - name: "Checkout GitHub Action"
+        id: checkout
+        uses: actions/checkout@main
+
+      - name: "Login to GitHub Container Registry"
+        id: docker_login
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ${{env.DOCKER_REGISTRY}}
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.1.0
+        with:
+          context: ./node
+          file: ./node/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tex-version }}
+          #   参数
+          build-args: |
+            nodetag=${{ matrix.node-version }}
