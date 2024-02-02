@@ -28,7 +28,7 @@ jobs:
       max-parallel: 3
       matrix:
         node-version: [18.18.2, 16.13.0]
-    name: Nodejs ${{ matrix.tex-version }}
+    name: Nodejs ${{ matrix.node-version }}
     steps:
       - name: "Checkout GitHub Action"
         id: checkout
@@ -48,7 +48,7 @@ jobs:
           context: ./node
           file: ./node/Dockerfile
           push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tex-version }}
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.node-version }}
           #   参数
           build-args: |
             nodetag=${{ matrix.node-version }}
